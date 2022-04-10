@@ -4,14 +4,7 @@
 
 #include <stdint.h>
 
-typedef struct {
-    const uint8_t width;
-    uint8_t height;
-    const uint16_t *data;
-} FontDef;
-
-
-extern FontDef Font_16x26;
 extern const uint8_t plaao_logo[25608];
+extern const uint8_t Font4x6[];
 
 #endif // __FONTS_H__

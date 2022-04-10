@@ -178,6 +178,7 @@ void ST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
     ST7735_Unselect();
 }
 
+/*
 static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor) {
     uint32_t i, b, j;
 
@@ -186,7 +187,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
     for(i = 0; i < font.height; i++) {
         b = font.data[(ch - 32) * font.height + i];
         for(j = 0; j < font.width; j++) {
-            if((b << j) & 0x8000)  {
+            if((b << j) & font.mask)  {
                 uint8_t data[] = { color >> 8, color & 0xFF };
                 ST7735_WriteData(data, sizeof(data));
             } else {
@@ -195,6 +196,40 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
             }
         }
     }
+}
+*/
+
+void ST7735_WriteString(uint16_t x, uint16_t y, const uint8_t *font, const char* str, uint16_t color, uint16_t bgcolor) {
+    ST7735_Select();
+
+    int xt = 160 - x;
+
+    while(*str) {
+        uint32_t i, b, j;
+
+        // This is all transposed which functionally means we'll be replacing y with x wherever necessary.
+        // This also means that we will be moving in a strange order, taking pixels in a different direction.
+        // Our font is designed to support this.
+        ST7735_SetAddressWindow(y, xt, y+5, xt+3);
+
+        for(i = 0; i < 4; i++) {
+            b = font[((*str) - 32) + (i * 95)];
+            for(j = 0; j < 6; j++) {
+                if((b << j) & 0b100000)  {
+                    uint8_t data[] = { color >> 8, color & 0xFF };
+                    ST7735_WriteData(data, sizeof(data));
+                } else {
+                    uint8_t data[] = { bgcolor >> 8, bgcolor & 0xFF };
+                    ST7735_WriteData(data, sizeof(data));
+                }
+            }
+        }
+
+        xt -= 5;
+        str++;
+    }
+
+    ST7735_Unselect();
 }
 
 /*
@@ -214,6 +249,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
 }
 */
 
+/*
 void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
     ST7735_Select();
 
@@ -239,6 +275,7 @@ void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, u
 
     ST7735_Unselect();
 }
+*/
 
 void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
     // clipping

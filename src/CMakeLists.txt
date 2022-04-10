@@ -1,5 +1,5 @@
 add_executable(rpg
-        button-blink.c
+        rpg.c
         external/fonts.c
         external/st7735.c
         external/DEV_Config.c
