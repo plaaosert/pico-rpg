@@ -7,16 +7,26 @@
 #include "data.c"
 
 
+int min(int a, int b) {
+	return a < b ? a : b;
+}
+
+
+int max(int a, int b) {
+	return a < b ? b : a;
+}
+
+
 int calc_xp_to_next(int level) {
 	return 10 + pow((float)level, 1.5f);
 }
 
 
 Character make_character(char* name) {
-	int specials[] = {};
-	int skills[] = {};
-	int all_skills[] = {};
-	int weapon_levels[] = {
+	int specials[5] = {};
+	int innate_skills[25] = {-1};
+	int all_skills[40] = {4};
+	int weapon_levels[11] = {
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	};
 	int equips[5] = {0, 1, 2, 3, 4};
@@ -28,19 +38,67 @@ Character make_character(char* name) {
 		0, 1, calc_xp_to_next(1),
 		BASE_PLAYER_ATK, BASE_PLAYER_DEF, BASE_PLAYER_MAG, BASE_PLAYER_WIL,
 		BASE_PLAYER_ATK, BASE_PLAYER_DEF, BASE_PLAYER_MAG, BASE_PLAYER_WIL,
-		*specials, *equips,
-		*skills, *all_skills,
-		*weapon_levels
+		{0,0,0,0,0}, {0,1,2,3,4},
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+		{1,1,1,1,1,1,1,1,1,1,1}
 	};
+
+	for (int i=0; i<5; i++) {
+		c.equipped[i] = i;
+		c.specials[i] = SS_NONE;
+	}
+
+	for (int i=0; i<11; i++) {
+		c.weapon_type_levels[i] = 1;
+	}
+
+	for (int i=0; i<25; i++) {
+		c.innate_skills[i] = -1;
+	}
+
+	for (int i=0; i<40; i++) {
+		c.all_skills[i] = -1;
+	}
 
 	return c;
 }
 
 
+void get_character_moves(Character *character) {
+	// To get a character's moves, we need to compare their level to their learnset.
+	// Then, add on their innate moves.
+	int global_i = 0;
+
+	int i = 0;
+	// Get character weapon type.
+	// If no weapon, barehanded.
+	int weapon_type = equip_list[character->equipped[4]].type;
+
+	while (character->level >= weapon_skill_levels[weapon_type][i]) {
+		character->all_skills[global_i] = weapon_skills[weapon_type][i];
+		i++;
+		global_i++;
+	}
+
+	i = 0;
+	while (character->innate_skills[i] != -1) {
+		character->all_skills[global_i] = character->innate_skills[i];
+		i++;
+		global_i++;
+	}
+
+	while (global_i < 40) {
+		character->all_skills[global_i] = -1;
+		global_i++;
+	}
+}
+
+
 void render_bar(float val, float max_val, int x, int y, int length, int height, uint16_t bar_color, uint16_t inner_bg_color) {
 	// Bar extends from right to left. Start x position should make it such that 160 - (start_x + length) = x.
-	//                    																											 160 - start_x - length = x
-	//  																																				 160 - x - length = start_x
+	//                    														 160 - start_x - length = x
+	//  																		 160 - x - length = start_x
 	int start_x = 160 - x - length;
 
 	int bits = round((1 - (val / max_val)) * (length));
@@ -117,6 +175,8 @@ void render_enemy_health_bar(Character character, int x, int y, int length, int 
 	render_bar(
 		(float)character.hp, (float)character.max_hp, x, y, length, height, ST7735_RED, inner_bg_color
 	);
+
+	render_bar_number(character.hp, character.max_hp, length, x, y + height + 2, ST7735_RED);
 }
 
 void render_mana_bar_bordered(Character character, int x, int y, int length, int height, uint16_t border_color, uint16_t inner_bg_color) {
